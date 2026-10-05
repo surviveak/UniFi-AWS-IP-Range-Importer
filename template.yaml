@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: UniFi AWS CIDR Importer - Automatically updates UniFi firewall address groups with AWS IP ranges
+
+Parameters:
+  UniFiConsoleId:
+    Type: String
+    Description: UniFi Console ID
+    Default: ""
+  
+  UniFiSiteName:
+    Type: String
+    Description: UniFi Site Internal Reference
+    Default: ""
+  
+  UniFiGroupId:
+    Type: String
+    Description: (Legacy) Single UniFi Address Group ID - use this OR UniFiGroupMappings
+    Default: ""
+  
+  UniFiGroupMappings:
+    Type: String
+    Description: (Recommended) Service to Group ID mappings (format SERVICE1:ID1,SERVICE2:ID2)
+    Default: ""
+  
+  UniFiApiKey:
+    Type: String
+    Description: UniFi API Key
+    NoEcho: true
+    Default: ""
+  
+  AwsServiceFilter:
+    Type: String
+    Description: Comma-separated AWS services to filter (e.g., EC2,CLOUDFRONT,S3)
+    Default: "EC2"
+  
+  AwsRegionFilter:
+    Type: String
+    Description: Comma-separated AWS regions to filter (e.g., us-east-1,us-west-2). Leave empty for all regions.
+    Default: "us-east-1"
+
+Resources:
+  UniFiCidrImporterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: UniFi-AWS-CIDR-Importer
+      Description: Updates UniFi firewall address groups when AWS publishes new IP ranges
+      Runtime: python3.11
+      Handler: lambda_function.lambda_handler
+      CodeUri: .
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          UNIFI_CONSOLE_ID: !Ref UniFiConsoleId
+          UNIFI_SITE_NAME: !Ref UniFiSiteName
+          UNIFI_GROUP_ID: !Ref UniFiGroupId
+          UNIFI_GROUP_MAPPINGS: !Ref UniFiGroupMappings
+          UNIFI_API_KEY: !Ref UniFiApiKey
+          AWS_SERVICE_FILTER: !Ref AwsServiceFilter
+          AWS_REGION_FILTER: !Ref AwsRegionFilter
+      Events:
+        AWSIpRangeUpdate:
+          Type: SNS
+          Properties:
+            Topic: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
+
+Outputs:
+  FunctionArn:
+    Description: Lambda Function ARN
+    Value: !GetAtt UniFiCidrImporterFunction.Arn
+  
+  FunctionName:
+    Description: Lambda Function Name
+    Value: !Ref UniFiCidrImporterFunction

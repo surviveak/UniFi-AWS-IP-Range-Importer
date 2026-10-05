@@ -1,0 +1,17 @@
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "unifi-aws-cidr-importer"
+s3_prefix = "unifi-aws-cidr-importer"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "UniFiConsoleId=\"YOUR_CONSOLE_ID\" UniFiSiteName=\"YOUR_SITE_NAME\" UniFiGroupId=\"YOUR_GROUP_ID\" AwsServiceFilter=\"EC2\" AwsRegionFilter=\"us-east-1\""
+resolve_s3 = true
+confirm_changeset = true
+disable_rollback = true
+image_repositories = []
+
+[default.global.parameters]
+region = "us-east-1"
